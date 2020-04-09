@@ -31,7 +31,7 @@ filename deaturlU "C:\Dados\Covid\COVID-19-World\COVID-19\csse_covid_19_data\css
 filename people "C:\Dados\Covid\COVID-19-Marco\Covid19-World-BR\support_data\World_Population_By_Country-20200402.xlsx";
 
 /********* Brazil data
-  This is the data from Brazilian Healthy Ministry
+  This is the data from Brazilian Health Ministry
   Updated everyday. Trying to update daily, but the file name have changed some days ago...
 	I did the date in 2 steps: first today yymmddb10. (b, before 10, stands for blank). 
 	I've tried n, standing for 'none', but it returned me an error message (invalid format).
@@ -59,12 +59,6 @@ proc sql;
 	into :covidSaude
 	from work.configEnvironment;
 quit;
-
-/*There are 2 patterns for name until now...*/
-/*filename confurlB url "https://covid.saude.gov.br/assets/files/BRnCov19_30032020.csv";*/
-
-/*Brasil mudou o método de nomear os arquivos, comentei o confiurlB pq não funciona mais (20200403)*/
-*filename confurlB url &covidSaude;
 
 %let xlsx_BR_sheet = BR_TimeSeries;
 %let xlsx_fileBRHist = C:\Dados\Covid\COVID-19-Marco\Covid19-World-BR\support_data\Coronavirus-Brasil-Timeseries.xlsx;

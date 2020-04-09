@@ -13,26 +13,10 @@ proc import datafile="&xlsx_fileBRHist"
 	getnames=yes;
 run;
 
-
-/* I don't need do this anymore
-proc transpose data=confirmed_BR_unofficial out=confirmed_BR_unofficial (rename=(_name_=date_Ref col1=confirmed));
-	by Descri__o Local Lat Lon Total notsorted;
-run;*/
-
-/*
-options validvarname=v7;
-proc import datafile=confurlB
- out=original_dataBR dbms=dlm replace;
-	delimiter=';';
-	getnames=yes;
-	guessingrows=all;
-run;
-*/
-
 /* Importing brazilian official data */
 proc sql noprint;
 	select covidBrFileName, catx('','"','C:\Dados\Covid\COVID-19-Marco\BR_Saude_Hist\CSV\COVID19_',covidBrFileName,'.csv','"')
-		into : covidBrFileName, :nomeArquivo
+		into :covidBrFileName, :nomeArquivo
 	from configEnvironment;
 quit;
 
@@ -52,8 +36,12 @@ run;
 
 /****************************************************************************************/
 
-proc sql number;
-	create table covid19.confirmed_data_br as
+proc sql noprint;
+	select max(snapshot)
+	into :dataMax 
+	from base_confirmed_data;
+
+	create table covid19.COVID_BR_CONFIRMED as
 	select UNF.Descri__o as Province_State
 		, 'Brazil' as Country_Region
 		, UNF.Lat as Lat
@@ -62,20 +50,20 @@ proc sql number;
 		, BR.data as Snapshot
 	from work.original_databr BR
 	inner join work.confirmed_br_unofficial UNF on UNF.local = BR.estado
-	where BR.data <= (select max(snapshot) from base_confirmed_data)
+	where BR.data <= &dataMax
 	order by UNF.Descri__o, Snapshot
 	;
 quit;
 
-data covid19.confirmed_data_br;
-	set covid19.confirmed_data_br;
+data covid19.COVID_BR_CONFIRMED;
+	set covid19.COVID_BR_CONFIRMED;
 
 	province_state = translate(province_state,'AAAAaaaaEEeeIiOOOoooUUuuCc','ÁÃÀÂáãàâÉÊéêÍíÓÕÔóõôÚÜúüÇç');
 
 run;
 
 proc sql number;
-	create table covid19.death_data_br as
+	create table covid19.covid_br_death as
 	select UNF.Descri__o as Province_State
 		, 'Brazil' as Country_Region
 		, UNF.Lat as Lat
@@ -89,8 +77,8 @@ proc sql number;
 	;
 quit;
 
-data covid19.death_data_br;
-	set covid19.death_data_br;
+data covid19.covid_br_death;
+	set covid19.covid_br_death;
 
 	province_state = translate(province_state,'AAAAaaaaEEeeIiOOOoooUUuuCc','ÁÃÀÂáãàâÉÊéêÍíÓÕÔóõôÚÜúüÇç');
 
