@@ -1,5 +1,23 @@
 /*REPORT*/
+/************************************/
+proc sql;
+	create table work.covid_world_confirmed_POL as
+	select wd.Country_Region as Country_region, sub.Group_Description as Province_State, 
+		'0' as Long, '0' as Lat, sum(wd.confirmed) as Confirmed, wd.Snapshot as Snpashot
+	from covid19.covid_world_confirmed wd
+		inner join covid19.subareagroup sub on 
+		(sub.country_region = wd.country_region and
+		sub.province_state = wd.province_state)
+	where sub.flg_active = 'Y'
+	group by wd.Country_Region, sub.Group_Description,wd.Snapshot
+	;
+	insert into covid19.covid_world_confirmed
+	select *
+	from work.covid_world_confirmed_POL;
+	drop table work.covid_world_confirmed_POL;
+quit;
 
+/************************************/
 /*World First Step*/
 proc sql;
 	create table control_panel_world as
@@ -54,6 +72,7 @@ proc sql;
 	;
 quit;
 
+/******************************************* daqui em diante será descartado) ****************/
 /*Brazil detailed*/
 proc sql;
 	insert into control_panel_brazil
@@ -133,7 +152,7 @@ quit;
 
 proc sql;
 	insert into control_panel_brazil
-	select distinct 'Brasil Centro Oeste' as Location
+	select distinct 'Brasil Centro-Oeste' as Location
 		, min(a.snapshot) as Day1 format ddmmyy10.
 		, max(a.snapshot) as Day_Snapshot format ddmmyy10.
 		,(select sum(b.confirmed) 
@@ -166,6 +185,79 @@ proc sql;
 	and a.province_state in ('Tocantins', 'Para', 'Amazonas', 'Rondonia','Amapa','Roraima','Acre');
 quit;
 
+proc sql;
+	create table covid19.subAreaGroup
+	(
+		group_name char(10),
+		group_description char(40),
+		country_region char(40),
+		province_state char(40),
+		flg_active char(1)
+	);
+	insert into covid19.subAreaGroup(group_name, group_description, country_region, province_state, flg_active)
+ 
+	values('BRLSE','Brasil Sudeste','Brazil','Sao Paulo','Y')
+	values('BRLSE','Brasil Sudeste','Brazil','Minas Gerais','Y')
+	values('BRLSE','Brasil Sudeste','Brazil','Rio de Janeiro','Y')
+	values('BRLSE','Brasil Sudeste','Brazil','Espirito Santo','Y')
+
+	values('BRLS1','Brasil Sul','Brazil','Santa Catarina','Y')
+	values('BRLS1','Brasil Sul','Brazil','Parana','Y')
+	values('BRLS1','Brasil Sul','Brazil','Rio Grande do Sul','Y')
+
+	values('BRLNE','Brasil Nordeste','Brazil','Bahia','Y')
+	values('BRLNE','Brasil Nordeste','Brazil','Pernambuco','Y')
+	values('BRLNE','Brasil Nordeste','Brazil','Rio Grande do Norte','Y')
+	values('BRLNE','Brasil Nordeste','Brazil','Ceara','Y')
+	values('BRLNE','Brasil Nordeste','Brazil','Maranhao','Y')
+	values('BRLNE','Brasil Nordeste','Brazil','Sergipe','Y')
+	values('BRLNE','Brasil Nordeste','Brazil','Piaui','Y')
+	values('BRLNE','Brasil Nordeste','Brazil','Alagoas','Y')
+	values('BRLNE','Brasil Nordeste','Brazil','Paraiba','Y')
+
+
+	values('BRLCO','Brasil Centro-Oeste','Brazil','Goias','Y')
+	values('BRLCO','Brasil Centro-Oeste','Brazil','Mato Grosso', 'Y')
+	values('BRLCO','Brasil Centro-Oeste','Brazil','Mato Grosso do Sul','Y')
+	values('BRLCO','Brasil Centro-Oeste','Brazil','Distrito Federal','Y')
+
+	values('BRLN1','Brasil Norte','Brazil','Amazonas','Y')
+	values('BRLN1','Brasil Norte','Brazil','Para','Y')
+	values('BRLN1','Brasil Norte','Brazil','Tocantins','Y')
+	values('BRLN1','Brasil Norte','Brazil','Roraima','Y')
+	values('BRLN1','Brasil Norte','Brazil','Amapa','Y')
+	values('BRLN1','Brasil Norte','Brazil','Rondonia','Y')
+	values('BRLN1','Brasil Norte','Brazil','Acre','Y')
+
+	values('BR0SP','Brasil sem SP','Brazil','Acre','Y')
+	values('BR0SP','Brasil sem SP','Brazil','Alagoas','Y')
+	values('BR0SP','Brasil sem SP','Brazil','Amapa','Y')
+	values('BR0SP','Brasil sem SP','Brazil','Amazonas','Y')
+	values('BR0SP','Brasil sem SP','Brazil','Bahia','Y')
+	values('BR0SP','Brasil sem SP','Brazil','Ceara','Y')
+	values('BR0SP','Brasil sem SP','Brazil','Distrito Federal','Y')
+	values('BR0SP','Brasil sem SP','Brazil','Espirito Santo','Y')
+	values('BR0SP','Brasil sem SP','Brazil','Goias','Y')
+	values('BR0SP','Brasil sem SP','Brazil','Maranhao','Y')
+	values('BR0SP','Brasil sem SP','Brazil','Mato Grosso','Y')
+	values('BR0SP','Brasil sem SP','Brazil','Mato Grosso do Sul','Y')
+	values('BR0SP','Brasil sem SP','Brazil','Minas Gerais','Y')
+	values('BR0SP','Brasil sem SP','Brazil','Para','Y')
+	values('BR0SP','Brasil sem SP','Brazil','Paraiba','Y')
+	values('BR0SP','Brasil sem SP','Brazil','Parana','Y')
+	values('BR0SP','Brasil sem SP','Brazil','Pernambuco','Y')
+	values('BR0SP','Brasil sem SP','Brazil','Piaui','Y')
+	values('BR0SP','Brasil sem SP','Brazil','Rondonia','Y')
+	values('BR0SP','Brasil sem SP','Brazil','Roraima','Y')
+	values('BR0SP','Brasil sem SP','Brazil','Rio de Janeiro','Y')
+	values('BR0SP','Brasil sem SP','Brazil','Rio Grande do Norte','Y')
+	values('BR0SP','Brasil sem SP','Brazil','Rio Grande do Sul','Y')
+	values('BR0SP','Brasil sem SP','Brazil','Santa Catarina','Y')
+	values('BR0SP','Brasil sem SP','Brazil','Sergipe','Y')
+	values('BR0SP','Brasil sem SP','Brazil','Tocantins','Y')
+	;
+quit;
+
 /*******************************************
 *  Transpose time and data driven routines
 ********************************************/
@@ -185,46 +277,9 @@ proc sql;
 quit;
 */
 proc transpose 
-	data=covid19.covid_world_confirmed
+	data=covid19.covid_world_confirmed 
 	out=covid19.report_world_base
 	(drop=_label_ _name_);
 	by Province_State Country_Region Lat Long notsorted;
 	id snapshot;
 run;
-
-/*Data driven time*/
-
-/*
-
-%macro createTimeline();
-
-
-	data _null_;
-		
-
-	run;
-
-	proc sql;
-		select br.location
-		, br.day1
-		, br.group
-		, br.total_days
-		, wb.lat
-		, wb.long
-		
-
-
-		from covid19.report_world_base wb
-		inner join control_panel_brazil br 
-			on br.location = wb.province_state
-		;
-	quit;
-%mend createTimeline;
-
-proc sql;
-	select *
-	from covid19.REPORT_WORLD_BASE
-	where country_region = 'Brazil';
-quit;
-
-*/
