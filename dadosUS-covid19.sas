@@ -1,3 +1,17 @@
+/**********************************************************
+	STEP 03
+	DadosUS - US Data. Importing data from JHU
+
+	By Marco Antonio Filgueiras Guimaraes (Github: Filgueiras)
+	Date: 2020/03/31
+
+	Tables created:
+	From files: original_dataUS, death_dataUS, .
+	Transposed: original_dataUS, death_dataUS (yes, it´s the same).
+	For now, I'm not droping the tables. (My work is in progress, I need to check information). 
+***********************************************************/
+
+/*US data being imported and, then, simplified*/
 options validvarname=v7;
 proc import datafile=confurlU
  out=original_dataUS dbms=csv replace;

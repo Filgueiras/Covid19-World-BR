@@ -1,3 +1,18 @@
+/**********************************************************
+	STEP 02
+	DadosMundo - World Data. Importing data from JHU and 
+	doing some transformations. This step was inspired by 
+	SAS Blog post (see it in a comment below).
+
+	By Marco Antonio Filgueiras Guimaraes (Github: Filgueiras)
+	Date: 2020/03/31
+
+	Tables created:
+	From files: original_dataJH, death_dataJH,recover_dataJH  
+	Transposed: base_confirmed_data, base_death_data, base_recovered_data
+	For now, I'm not droping the tables. (My work is in progress, I need to check information). 
+***********************************************************/
+
 /*Import files area*/
 
 options validvarname=v7;
@@ -80,6 +95,8 @@ data base_recovered_data (drop = month day year hour minute datestring);
 	format snapshot ddmmyy10.; /*Date in Brazilian format, by Marco*/
 	snapshot=mdy(month,day,year);
 run;
+
+
 /*
 proc sql;
 	drop table death_datajh;

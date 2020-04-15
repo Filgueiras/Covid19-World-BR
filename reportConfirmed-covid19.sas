@@ -1,189 +1,17 @@
+/**********************************************************
+	STEP 07
+	Report for Confirmed Data
+
+	By Marco Antonio Filgueiras Guimaraes (Github: Filgueiras)
+	Date: 2020/03/31
+
+	Tables created: covid19.subAreaGroup
+	Temp tables: work.covid_world_confirmed_POL,work.support_brazil_data_POL
+				
+************************************************************/
+
 /*REPORT*/
 /************************************/
-proc sql;
-	create table work.covid_world_confirmed_POL as
-	select wd.Country_Region as Country_region, sub.Group_Description as Province_State, 
-		'0' as Long, '0' as Lat, sum(wd.confirmed) as Confirmed, wd.Snapshot as Snpashot
-	from covid19.covid_world_confirmed wd
-		inner join covid19.subareagroup sub on 
-		(sub.country_region = wd.country_region and
-		sub.province_state = wd.province_state)
-	where sub.flg_active = 'Y'
-	group by wd.Country_Region, sub.Group_Description,wd.Snapshot
-	;
-	insert into covid19.covid_world_confirmed
-	select *
-	from work.covid_world_confirmed_POL;
-	drop table work.covid_world_confirmed_POL;
-quit;
-
-/************************************/
-/*World First Step*/
-proc sql;
-	create table control_panel_world as
-	select country_region as Location
-		, min(Snapshot) as Day1 format ddmmyy10.
-		, max(snapshot) as Day_Snapshot format ddmmyy10.
-		, max(confirmed) as Confirmed
-		, max(snapshot) - min(Snapshot) as Total_Days
-		, 'WORLD' as Group
-	from covid19.covid_world_confirmed
-	where confirmed > 0
-	and province_state is null
-	group by country_region;
-quit;
-
-/*World Last Step*/
-proc sql noprint;
-	select max(snapshot) 
-	into :limitDate
-	from covid19.covid_world_confirmed;
-
-	insert into control_panel_world
-	select a.country_region as Location
-		, min(a.Snapshot) as Day1 format ddmmyy10.
-		, max(a.snapshot) as Day_Snapshot format ddmmyy10.
-		, (select sum(confirmed) 
-			from covid19.covid_world_confirmed b
-			where b.country_region = a.country_region
-			and b.snapshot = &limitDate
-			) as Confirmed
-		, max(a.snapshot) - min(a.Snapshot) as Total_Days
-		, 'WORLD' as Group
-	from covid19.covid_world_confirmed a
-	where confirmed > 0
-	and province_state is not null
-	group by country_region;
-quit;
-
-/*Brazil 1st Step*/
-proc sql;
-	create table control_panel_brazil as
-	select province_state as Location
-		, min(Snapshot) as Day1 format ddmmyy10.
-		, max(snapshot) as Day_Snapshot format ddmmyy10.
-		, max(confirmed) as Confirmed
-		, max(snapshot) - min(Snapshot) as Total_Days
-		, 'BRASIL' as Group 
-	from covid19.covid_world_confirmed
-	where confirmed > 0
-	and country_region = 'Brazil'
-	group by province_state
-	;
-quit;
-
-/******************************************* daqui em diante será descartado) ****************/
-/*Brazil detailed*/
-proc sql;
-	insert into control_panel_brazil
-	select distinct 'Brasil sem SP' as Location /*the province column made me do it*/
-		, min(a.snapshot) as Day1 format ddmmyy10.
-		, max(a.snapshot) as Day_Snapshot format ddmmyy10.
-		, (select sum(b.confirmed) 
-			from covid19.covid_world_confirmed b
-			where b.country_region = a.country_region
-			and b.province_state ne 'Sao Paulo'
-			and b.snapshot = &limitDate
-			) as Confirmed
-		, max(a.snapshot) - min(a.Snapshot) as Total_Days
-		, 'BR0SP' as Group
-	from covid19.covid_world_confirmed a
-	where a.confirmed > 0
-	and a.country_region = 'Brazil'
-	and a.province_state ne 'Sao Paulo';
-quit;
-
-proc sql;
-	insert into control_panel_brazil
-	select distinct 'Brasil Sudeste' as Location
-		, min(a.snapshot) as Day1 format ddmmyy10.
-		, max(a.snapshot) as Day_Snapshot format ddmmyy10.
-		,(select sum(b.confirmed) 
-			from covid19.covid_world_confirmed b
-			where b.country_region = a.country_region
-			and b.province_state in ('Sao Paulo', 'Minas', 'Rio de Janeiro', 'Espirito Santo')
-			and b.snapshot = &limitDate
-			) as Confirmed
-		,max(a.snapshot) - min(a.Snapshot) as Total_Days
-		, 'BRLSE' as Group
-	from covid19.covid_world_confirmed a
-	where a.confirmed > 0
-	and a.country_region = 'Brazil'	
-	and a.province_state in ('Sao Paulo', 'Minas', 'Rio de Janeiro', 'Espirito Santo');
-quit;
-
-proc sql;
-	insert into control_panel_brazil
-	select distinct 'Brasil Sul' as Location
-		, min(a.snapshot) as Day1 format ddmmyy10.
-		, max(a.snapshot) as Day_Snapshot format ddmmyy10.
-		,(select sum(b.confirmed) 
-			from covid19.covid_world_confirmed b
-			where b.country_region = a.country_region
-			and b.province_state in ('Santa Catarina', 'Parana', 'Rio Grande do Sul')
-			and b.snapshot = &limitDate
-			) as Confirmed
-		,max(a.snapshot) - min(a.Snapshot) as Total_Days
-		, 'BRLS1' as Group
-	from covid19.covid_world_confirmed a
-	where a.confirmed > 0
-	and a.country_region = 'Brazil'	
-	and a.province_state in ('Santa Catarina', 'Parana', 'Rio Grande do Sul');
-quit;
-
-proc sql;
-	insert into control_panel_brazil
-	select distinct 'Brasil Nordeste' as Location
-		, min(a.snapshot) as Day1 format ddmmyy10.
-		, max(a.snapshot) as Day_Snapshot format ddmmyy10.
-		,(select sum(b.confirmed) 
-			from covid19.covid_world_confirmed b
-			where b.country_region = a.country_region
-			and b.province_state in ('Bahia','Pernambuco','Rio Grande do Norte','Ceara','Maranhao','Sergipe','Piaui','Alagoas','Paraiba')
-			and b.snapshot = &limitDate
-			) as Confirmed
-		,max(a.snapshot) - min(a.Snapshot) as Total_Days
-		, 'BRLNE' as Group
-	from covid19.covid_world_confirmed a
-	where a.confirmed > 0
-	and a.country_region = 'Brazil'	
-	and a.province_state in ('Bahia','Pernambuco','Rio Grande do Norte','Ceara','Maranhao','Sergipe','Piaui','Alagoas','Paraiba');
-quit;
-
-proc sql;
-	insert into control_panel_brazil
-	select distinct 'Brasil Centro-Oeste' as Location
-		, min(a.snapshot) as Day1 format ddmmyy10.
-		, max(a.snapshot) as Day_Snapshot format ddmmyy10.
-		,(select sum(b.confirmed) 
-			from covid19.covid_world_confirmed b
-			where b.country_region = a.country_region
-			and b.province_state in ('Goias', 'Mato Grosso', 'Mato Grosso do Sul', 'Distrito Federal')
-			and b.snapshot = &limitDate
-			) as Confirmed
-		,max(a.snapshot) - min(a.Snapshot) as Total_Days
-		, 'BRLCO' as Group
-	from covid19.covid_world_confirmed a
-	where a.confirmed > 0
-	and a.country_region = 'Brazil'	
-	and a.province_state in ('Goias', 'Mato Grosso', 'Mato Grosso do Sul', 'Distrito Federal')
-	UNION
-	select distinct 'Brasil Norte' as Location
-		, min(a.snapshot) as Day1 format ddmmyy10.
-		, max(a.snapshot) as Day_Snapshot format ddmmyy10.
-		,(select sum(b.confirmed) 
-			from covid19.covid_world_confirmed b
-			where b.country_region = a.country_region
-			and b.province_state in ('Tocantins', 'Para', 'Amazonas', 'Rondonia','Amapa','Roraima','Acre')
-			and b.snapshot = &limitDate
-			) as Confirmed
-		,max(a.snapshot) - min(a.Snapshot) as Total_Days
-		, 'BRLN1' as Group
-	from covid19.covid_world_confirmed a
-	where a.confirmed > 0
-	and a.country_region = 'Brazil'	
-	and a.province_state in ('Tocantins', 'Para', 'Amazonas', 'Rondonia','Amapa','Roraima','Acre');
-quit;
 
 proc sql;
 	create table covid19.subAreaGroup
@@ -258,24 +86,110 @@ proc sql;
 	;
 quit;
 
+
+proc sql;
+	create table work.covid_world_confirmed_POL as
+	select wd.Country_Region as Country_region, sub.Group_Description as Province_State, 
+		'0' as Long, '0' as Lat, sum(wd.confirmed) as Confirmed, wd.Snapshot as Snpashot
+	from covid19.covid_world_confirmed wd
+		inner join covid19.subareagroup sub on 
+		(sub.country_region = wd.country_region and
+		sub.province_state = wd.province_state)
+	where sub.flg_active = 'Y'
+	group by wd.Country_Region, sub.Group_Description,wd.Snapshot
+	;
+	insert into covid19.covid_world_confirmed
+	select *
+	from work.covid_world_confirmed_POL;
+
+	drop table work.covid_world_confirmed_POL;
+quit;
+proc sql;
+	/* Dados de suporte - Support brazilian data */
+	create table work.support_brazil_data_POL as
+	select 	sub.Group_Description as UF,
+			sum(br.Area_km2_2018) as Area_km2_2018,
+			sum(br.Populacao_Estimada_2019) as Populacao_Estimada_2019,
+			avg(br.Densidade_demografica_km2_2010) as Densidade_demografica_km2_2010,
+			avg(br.renda_mensal_domi_percap_2019) as Renda_mensal_domi_percap_2019,
+			avg(br.idh_2010) as Idh_2010
+	from work.support_brazil_data br
+	inner join covid19.subareagroup sub on 
+		(sub.province_state = br.UF)
+	group by sub.Group_Description
+	;
+
+	insert into work.support_brazil_data(UF,Area_km2_2018, Populacao_Estimada_2019,Densidade_demografica_km2_2010, Renda_mensal_domi_percap_2019, idh_2010)
+	select 	UF,
+			Area_km2_2018,
+			Populacao_Estimada_2019,
+			Densidade_demografica_km2_2010,
+			Renda_mensal_domi_percap_2019,
+			IDH_2010
+	from work.support_brazil_data_POL
+	;
+	drop table work.support_brazil_data_POL;
+quit;
+
+/************************************/
+/*World First Step*/
+proc sql;
+	create table control_panel_world as
+	select country_region as Location
+		, min(Snapshot) as Day1 format ddmmyy10.
+		, max(snapshot) as Day_Snapshot format ddmmyy10.
+		, max(confirmed) as Confirmed
+		, max(snapshot) - min(Snapshot) as Total_Days
+		, 'WORLD' as Group
+	from covid19.covid_world_confirmed
+	where confirmed > 0
+	and province_state is null
+	group by country_region;
+quit;
+
+/*World Last Step*/
+proc sql noprint;
+	select max(snapshot) 
+	into :limitDate
+	from covid19.covid_world_confirmed;
+
+	insert into control_panel_world
+	select a.country_region as Location
+		, min(a.Snapshot) as Day1 format ddmmyy10.
+		, max(a.snapshot) as Day_Snapshot format ddmmyy10.
+		, (select sum(confirmed) 
+			from covid19.covid_world_confirmed b
+			where b.country_region = a.country_region
+			and b.snapshot = &limitDate
+			) as Confirmed
+		, max(a.snapshot) - min(a.Snapshot) as Total_Days
+		, 'WORLD' as Group
+	from covid19.covid_world_confirmed a
+	where confirmed > 0
+	and province_state is not null
+	group by country_region;
+quit;
+
+/*Brazil 1st Step*/
+proc sql;
+	create table control_panel_brazil as
+	select province_state as Location
+		, min(Snapshot) as Day1 format ddmmyy10.
+		, max(snapshot) as Day_Snapshot format ddmmyy10.
+		, max(confirmed) as Confirmed
+		, max(snapshot) - min(Snapshot) as Total_Days
+		, 'BRASIL' as Group 
+	from covid19.covid_world_confirmed
+	where confirmed > 0
+	and country_region = 'Brazil'
+	group by province_state
+	;
+quit;
+
 /*******************************************
 *  Transpose time and data driven routines
 ********************************************/
-/*
-proc sql;
-	select country_region as Pais, province_state as Interno, count(snapshot) as Dias
-	from covid19.covid_world_confirmed
-	group by country_region, province_state 
-	having count(snapshot) > 77;
-quit;
 
-proc sql;
-	select *
-	from covid19.covid_world_confirmed
-	where province_state = 'New York'
-	;
-quit;
-*/
 proc transpose 
 	data=covid19.covid_world_confirmed 
 	out=covid19.report_world_base

@@ -1,8 +1,13 @@
 /**********************************************************
+	STEP 01
 	Environment and session variables initialization
 
 	By Marco Antonio Filgueiras Guimaraes (Github: Filgueiras)
 	Date: 2020/03/31
+***********************************************************
+	Desc: changing the time to change the brazilian data file name
+			from 5pm to 7pm (and to 6pm 2020/04/13).
+	Date: 2020/04/14
 ***********************************************************/
 
 libname covid19 'C:\Dados\Covid\DB_COVID';
@@ -44,11 +49,14 @@ data work.configEnvironment;
 	yesterdayWas = intnx('day', today(),-1);
 	todayIs =today();
 
-	if sessionTime > 61200 then
+	/*5pm, time of a new file... 
+	They use to be delayed and, finally, 2020-04-13, they changed from 61200 (5pm) to 64800 (6pm)*/
+	if sessionTime > (19*3600) then /*I decided to get the new file only after 7pm : 7*3600 = */
 		dataCSV = todayIs;
 	else 
 		dataCSV = yesterdayWas;
 
+	/*It doesn't work anymore - you can check in the repo. They have changed the file name.*/
 	covidSaude = catx('','"https://covid.saude.gov.br/assets/files/COVID19_',compress(put(dataCSV,yymmddb10.)),'.csv"');
 	covidSaude = compress(covidSaude);
 	covidBrFileName = compress(put(dataCSV,yymmddb10.));
@@ -67,6 +75,7 @@ quit;
 /*Brazil population and density information. Source: IBGE*/
 filename ibge "C:\Dados\Covid\COVID-19-Marco\IBGE_BR_data\demographicData-20200403.csv";
 
+/*Just checking the variables in the end*/
 proc sql;
 	select name, value
 	from dictionary.macros

@@ -1,3 +1,14 @@
+/**********************************************************
+	STEP 06
+	dadosSuporte (Support data)
+
+	By Marco Antonio Filgueiras Guimaraes (Github: Filgueiras)
+	Date: 2020/03/31
+
+	Tables created: SUPPORT_WORLD_DATA, SUPPORT_BRAZIL_DATA
+	Just importing additional info about population and areas
+************************************************************/
+
 /*Dados suporte*/
 
 /*Support data about countries*/
@@ -73,4 +84,63 @@ data SUPPORT_WORLD_DATA(rename=(pop=population_2020 net=net_change));
 	net = input(net_change,COMMA13.);
 	land_area_km = input(land_area,COMMA13.);
 	drop Population_2020 net_change land_area;
+
 run;
+
+/**************************************************************************
+	Standardizing names of countries
+***************************************************************************/
+
+data SUPPORT_WORLD_DATA;
+	set work.support_world_data(rename=(country_name=name_changing));
+	/*Data Synch:
+	Support World Hash Country Missing = Burma
+	Support World Hash Country Missing = Congo (Brazzaville)
+	Support World Hash Country Missing = Congo (Kinshasa)
+	Support World Hash Country Missing = Cote d'Ivoire
+	Support World Hash Country Missing = Czechia
+	Support World Hash Country Missing = Diamond Princess
+	Support World Hash Country Missing = Korea, South
+	Support World Hash Country Missing = Kosovo
+	Support World Hash Country Missing = MS Zaandam
+	Support World Hash Country Missing = Saint Kitts and Nevis
+	Support World Hash Country Missing = Saint Vincent and the Grenadines
+	Support World Hash Country Missing = Sao Tome and Principe
+	Support World Hash Country Missing = Taiwan*
+	Support World Hash Country Missing = West Bank and Gaza
+
+	https://geology.com/world/burma-satellite-image.shtml
+	Names adaptation from one source to another
+	*/
+	length Country_Name $ 40.;
+	Country_Name = name_changing;
+
+	if country_name = 'Myanmar' then country_name = 'Burma';
+	if country_name = 'Congo' then country_name = 'Congo (Brazzaville)';
+	if country_name = 'DR Congo' then country_name = 'Congo (Kinshasa)';
+	if country_name = "Côte d'Ivoire" then country_name = "Cote d'Ivoire";
+
+	if country_name = 'Saint Kitts & Nevis' then country_name = 'Saint Kitts and Nevis';
+	if country_name = 'St. Vincent & Grenadines' then country_name = 'Saint Vincent and the Grenadines';
+	if country_name = 'Sao Tome & Principe' then country_name = 'Sao Tome and Principe';
+	if country_name = 'Taiwan' then country_name = 'Taiwan*';
+	
+	drop name_changing;
+
+run;
+/*
+proc sql;
+
+	select *
+	from work.support_world_data
+	where country_name contains '&'
+	order by country_name;
+	
+	select *
+	from work.control_panel_world
+	where location in ('MS Zaandam','Diamond Princess','Taiwan*')
+	or location contains ' and '
+	order by location;
+
+quit;
+*/

@@ -1,3 +1,15 @@
+/**********************************************************
+	STEP 03
+	DadosBrasil - Brazil Data. Importing data from covid.saude.gov.br 
+
+	By Marco Antonio Filgueiras Guimaraes (Github: Filgueiras)
+	Date: 2020/03/31
+
+	Tables created:
+	From files: confirmed_BR_unofficial (my data), original_dataBR (official BR data).
+	Working data: covid19.COVID_BR_CONFIRMED, covid19.covid_br_death.
+	For now, I'm not droping the tables. (My work is in progress, I need to check information). 
+***********************************************************/
 
 /***************************** 
 	Importing Excel files 
@@ -35,6 +47,9 @@ run;
 
 
 /****************************************************************************************/
+
+/*The ideia here is check the max date because I don´t want brazilian's data date higher
+	than world's data date*/
 
 proc sql noprint;
 	select max(snapshot)
