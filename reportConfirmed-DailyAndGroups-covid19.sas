@@ -175,7 +175,7 @@ quit;
 proc plot data=covid19.report_daily;
 
 run;
-
+/*
 proc format;
  value nulos 
 	. = " "
@@ -199,7 +199,9 @@ proc report data=covid19.report_daily;
 	define Country_Region / style(column)={tagattr='Type:Text' width=100%};
 run;
 ODS EXCEL CLOSE ;
+*/
 
+/*
 proc sql;
 	select name, value
 	from dictionary.macros
@@ -207,3 +209,4 @@ proc sql;
 	and substr(name,1,1) ne '_'
 	and substr(name,1,3) not in ('SQL','SAS','SYS');
 quit;
+*/
