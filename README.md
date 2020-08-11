@@ -6,3 +6,7 @@ Brazil data: official central government data (covid.saude.gov.br, download butt
 
 About the folder structure (and a little bit about the data). 
 2020/04/09: the data structure of the project is defined, but the information in my machine is structured in a different manner. The files path need to be changed before run the codes. I will update de the files everyday. Brazilian data will be accumulated. The world data, don't - you can pick the data in the Johns Hopkins repository. Ah, I put a data source from Europe, but didn't work on it (and I don't know if I will, but is good to know other data sources).
+
+**Note**
+Unfortunately, Brazilian government have changed the files layout after I've published this work (more than once).
+I could't change the codes or upgrade the routines, than this project stopped working for Brazilian files.
